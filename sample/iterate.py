@@ -7,7 +7,7 @@ from random import random
 
 
 def iterate(problem, last_solution):
-    pizzas = list(filter(lambda it: random() > 0.75, last_solution.types))
+    pizzas = list(filter(lambda it: random() > 0.99, last_solution.types))
     current = sum(map(lambda it: problem.pizzas.types[it], pizzas))
 
     for id, type in list(enumerate(problem.pizzas.types)):
