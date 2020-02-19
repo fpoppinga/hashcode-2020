@@ -20,7 +20,7 @@ def solve(problem):
             current += type
             pizzas.append(id)
         else:
-            break
+            continue
 
     return Solution(pizzas)
 
