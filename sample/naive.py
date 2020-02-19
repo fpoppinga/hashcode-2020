@@ -20,7 +20,7 @@ def solve(problem):
             current += type
             pizzas.append(id)
         else:
-            continue
+            break
 
     return Solution(pizzas)
 
@@ -28,6 +28,7 @@ def solve(problem):
 if __name__ == "__main__":
 
     for file in os.listdir("in"):
+        print(file)
         p = Problem("in/{}".format(file))
         s = solve(p)
         s.to_file("out/{}".format(file.replace(".in", ".out")))
