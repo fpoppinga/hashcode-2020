@@ -49,6 +49,7 @@ def score(problem: Problem, solution: Solution):
     for type in solution.types:
         score += problem.pizzas.types[type]
     assert score <= problem.pizzas.max_pizza
+    print("Score: {}".format(score))
     return score
 
 
