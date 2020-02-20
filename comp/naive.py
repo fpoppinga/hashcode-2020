@@ -25,6 +25,10 @@ def solve(problem):
     rem_days = problem.num_day
     for chunk in chunks(ordered, 100):
         optimized, rem_days = optimize(problem, rem_days, chunk)
+        before = list(map(lambda it: it.lib_id, chunk))
+        after = list(map(lambda it: it.lib_id, optimized))
+        if after != before:
+            print("yay")
         sol += optimized
 
     libs = []
@@ -36,37 +40,40 @@ def solve(problem):
 
 def optimize(problem, remaining_days, window_libs):
     slibs = []
+    rem_days = remaining_days
     for _ in range(len(window_libs)):
-        max_count = 0
+        max_count = -1
         for idx, slib in enumerate(window_libs):
-            count = lib_count(problem, slib, remaining_days)
+            count = lib_count(problem, slib, rem_days)
             if count > max_count:
                 best = slib
                 best_idx = idx
                 max_count = count
         slibs.append(best)
-        remaining_days -= problem.libs[best.lib_id].signup_days
+        rem_days -= problem.libs[best.lib_id].signup_days
         window_libs = window_libs[0:best_idx] + window_libs[best_idx + 1:]
-    return slibs, remaining_days
+    return slibs, rem_days
 
 
 def lib_count(problem, slib, remaining_days):
     lib = problem.libs[slib.lib_id]
     lib_rem_days = remaining_days - lib.signup_days
-    int = integral(problem, lib)
+    if lib_rem_days < 0:
+        return 0
+    integ = integral(problem, lib)
     # max points for this lib
-    if lib_rem_days < len(int) and lib_rem_days >= 0:
-        return int[lib_rem_days]
+    if lib_rem_days < len(integ):
+        return integ[lib_rem_days]
     else:
-        return int[-1]
+        return integ[-1]
 
 
 def integral(problem, lib):
     ordered = sorted(lib.book_ids, key=lambda it: -problem.scores[it])
-    int = list(map(lambda it: problem.scores[it], ordered))
+    integ = list(map(lambda it: problem.scores[it], ordered))
     for idx, book_id in enumerate(ordered[1:]):
-        int[idx + 1] += int[idx]
-    return int
+        integ[idx + 1] += integ[idx]
+    return integ
 
 
 if __name__ == "__main__":
