@@ -5,6 +5,11 @@ from comp.io import Problem, score, SolutionLibs, Solution
 from sample.naive import zipdir
 
 
+def chunks(lst, n):
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+
 def solve(problem):
     libs_with_score = []
     for id, lib in enumerate(problem.libs):
@@ -14,27 +19,54 @@ def solve(problem):
         book_score = s / (0.10 * (lib.num_books / lib.books_per_day) + 0.90 * lib.signup_days)
         libs_with_score.append((s_lib, book_score))
 
-    ordered = sorted(libs_with_score, key=lambda it: -it[1])
+    ordered = list(map(lambda it: it[0], sorted(libs_with_score, key=lambda it: -it[1])))
 
-    libs_with_score = []
-    used_books = set()
-    for slib, s in ordered:
-        lib = problem.libs[slib.lib_id]
-        remaining_books = set(slib.book_ids).difference(used_books)
-        slib_ = SolutionLibs(slib.lib_id, list(remaining_books))
-        used_books.update(remaining_books)
-        sol = Solution([slib_])
-        s = score(problem, sol)
-        book_score = s / (0.10 * (lib.num_books / lib.books_per_day) + 0.90 * lib.signup_days)
-        libs_with_score.append((slib_, book_score))
-
-    ordered = sorted(libs_with_score, key=lambda it: -it[1])
+    sol = []
+    rem_days = problem.num_day
+    for chunk in chunks(ordered, 100):
+        optimized, rem_days = optimize(problem, rem_days, chunk)
+        sol += optimized
 
     libs = []
-    for s_lib, s in ordered:
+    for s_lib in sol:
         libs.append(s_lib)
     s = Solution(libs)
     return s
+
+
+def optimize(problem, remaining_days, window_libs):
+    slibs = []
+    for _ in range(len(window_libs)):
+        max_count = 0
+        for idx, slib in enumerate(window_libs):
+            count = lib_count(problem, slib, remaining_days)
+            if count > max_count:
+                best = slib
+                best_idx = idx
+                max_count = count
+        slibs.append(best)
+        remaining_days -= problem.libs[best.lib_id].signup_days
+        window_libs = window_libs[0:best_idx] + window_libs[best_idx + 1:]
+    return slibs, remaining_days
+
+
+def lib_count(problem, slib, remaining_days):
+    lib = problem.libs[slib.lib_id]
+    lib_rem_days = remaining_days - lib.signup_days
+    int = integral(problem, lib)
+    # max points for this lib
+    if lib_rem_days < len(int) and lib_rem_days >= 0:
+        return int[lib_rem_days]
+    else:
+        return int[-1]
+
+
+def integral(problem, lib):
+    ordered = sorted(lib.book_ids, key=lambda it: -problem.scores[it])
+    int = list(map(lambda it: problem.scores[it], ordered))
+    for idx, book_id in enumerate(ordered[1:]):
+        int[idx + 1] += int[idx]
+    return int
 
 
 if __name__ == "__main__":
