@@ -77,10 +77,10 @@ def lib_count(problem, slib, remaining_days, used_books):
     lib = problem.libs[slib.lib_id]
     lib_rem_days = remaining_days - lib.signup_days
     if lib_rem_days <= 0:
-        return 0
+        return -1
     integ = integral(problem, lib, used_books)
     if len(integ) == 0:
-        return 0
+        return -1
     # max points for this lib
     if lib_rem_days < len(integ):
         return integ[lib_rem_days]
