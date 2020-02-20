@@ -75,7 +75,7 @@ def lib_count(problem, slib, remaining_days, used_books):
     lib = problem.libs[slib.lib_id]
     lib_rem_days = remaining_days - lib.signup_days
     if lib_rem_days <= 0:
-        return -1
+        return 0
     integ = integral(problem, lib, used_books)
     if len(integ) == 0:
         return -1
@@ -89,9 +89,16 @@ def lib_count(problem, slib, remaining_days, used_books):
 def integral(problem, lib, used_books):
     book_ids = list(filter(lambda it: it not in used_books, lib.book_ids))
     ordered = sorted(book_ids, key=lambda it: -problem.scores[it])
-    integ = list(map(lambda it: problem.scores[it], ordered))
-    for idx, book_id in enumerate(ordered[1:]):
-        integ[idx + 1] += integ[idx]
+
+    chunked = list(chunks(ordered, lib.books_per_day, 0))
+    integ = [0 for _ in range(len(chunked))]
+    for day, chunk in enumerate(chunked):
+        x = sum(map(lambda it: problem.scores[it], chunk))
+        if day == 0:
+            integ[0] = x
+            continue
+        integ[day] = x + integ[day - 1]
+
     return integ
 
 
