@@ -52,19 +52,22 @@ def optimize(problem, remaining_days, window_libs, used_books):
     slibs = []
     rem_days = remaining_days
     for _ in range(len(window_libs)):
-        max_count = -2
+        max_count = -1
+        best = None
         for idx, slib in enumerate(window_libs):
             # count = score(problem, Solution(slibs+[slib]))
             count = lib_count(problem, slib, rem_days, used_books)
             if count > max_count:
-                ordered = sorted(filter(lambda it: it not in used_books, slib.book_ids), key=lambda it: -problem.scores[it])
+                ordered = sorted(filter(lambda it: it not in used_books, slib.book_ids),
+                                 key=lambda it: -problem.scores[it])
                 best = SolutionLibs(slib.lib_id, ordered)
                 best_idx = idx
                 max_count = count
-        slibs.append(best)
-        used_books.update(best.book_ids)
-        rem_days -= problem.libs[best.lib_id].signup_days
-        window_libs = window_libs[0:best_idx] + window_libs[best_idx + 1:]
+        if best is not None:
+            slibs.append(best)
+            used_books.update(best.book_ids)
+            rem_days -= problem.libs[best.lib_id].signup_days
+            window_libs = window_libs[0:best_idx] + window_libs[best_idx + 1:]
     return slibs, rem_days, used_books
 
 
