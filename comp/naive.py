@@ -5,9 +5,12 @@ from comp.io import Problem, score, SolutionLibs, Solution
 from sample.naive import zipdir
 
 
-def chunks(lst, n):
+def chunks(lst, n, offset):
+    if offset > len(lst):
+        return lst
+    yield lst[0:offset]
     for i in range(0, len(lst), n):
-        yield lst[i:i + n]
+        yield lst[offset + i:offset + i + n]
 
 
 def solve(problem):
@@ -21,23 +24,29 @@ def solve(problem):
 
     ordered = list(map(lambda it: it[0], sorted(libs_with_score, key=lambda it: -it[1])))
 
+    sol1 = iterate(problem, ordered, 100, 0)
+    sol2 = iterate(problem, sol1, 100, 50)
+
+    libs = []
+    for s_lib in sol2:
+        libs.append(s_lib)
+    s = Solution(libs)
+    return s
+
+
+def iterate(problem, ordered, chunk_size, offset):
     sol = []
     rem_days = problem.num_day
     used_books = set()
-    for chunk in chunks(ordered, 500):
+    for chunk in chunks(ordered, chunk_size, offset):
         optimized, rem_days, used_books = optimize(problem, rem_days, chunk, used_books)
         before = list(map(lambda it: it.lib_id, chunk))
         after = list(map(lambda it: it.lib_id, optimized))
         if after != before:
             print("yay")
         sol += optimized
-        print("used", len(used_books))
+    return sol
 
-    libs = []
-    for s_lib in sol:
-        libs.append(s_lib)
-    s = Solution(libs)
-    return s
 
 def optimize(problem, remaining_days, window_libs, used_books):
     slibs = []
@@ -48,7 +57,7 @@ def optimize(problem, remaining_days, window_libs, used_books):
             # count = score(problem, Solution(slibs+[slib]))
             count = lib_count(problem, slib, rem_days, used_books)
             if count > max_count:
-                ordered = sorted(slib.book_ids, key=lambda it: -problem.scores[it])
+                ordered = sorted(filter(lambda it: it not in used_books, slib.book_ids), key=lambda it: -problem.scores[it])
                 best = SolutionLibs(slib.lib_id, ordered)
                 best_idx = idx
                 max_count = count
