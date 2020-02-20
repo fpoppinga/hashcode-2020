@@ -23,13 +23,15 @@ def solve(problem):
 
     sol = []
     rem_days = problem.num_day
-    for chunk in chunks(ordered, 100):
-        optimized, rem_days = optimize(problem, rem_days, chunk)
+    used_books = set()
+    for chunk in chunks(ordered, 500):
+        optimized, rem_days, used_books = optimize(problem, rem_days, chunk, used_books)
         before = list(map(lambda it: it.lib_id, chunk))
         after = list(map(lambda it: it.lib_id, optimized))
         if after != before:
             print("yay")
         sol += optimized
+        print("used", len(used_books))
 
     libs = []
     for s_lib in sol:
@@ -37,30 +39,34 @@ def solve(problem):
     s = Solution(libs)
     return s
 
-
-def optimize(problem, remaining_days, window_libs):
+def optimize(problem, remaining_days, window_libs, used_books):
     slibs = []
     rem_days = remaining_days
     for _ in range(len(window_libs)):
-        max_count = -1
+        max_count = -2
         for idx, slib in enumerate(window_libs):
-            count = lib_count(problem, slib, rem_days)
+            # count = score(problem, Solution(slibs+[slib]))
+            count = lib_count(problem, slib, rem_days, used_books)
             if count > max_count:
-                best = slib
+                ordered = sorted(slib.book_ids, key=lambda it: -problem.scores[it])
+                best = SolutionLibs(slib.lib_id, ordered)
                 best_idx = idx
                 max_count = count
         slibs.append(best)
+        used_books.update(best.book_ids)
         rem_days -= problem.libs[best.lib_id].signup_days
         window_libs = window_libs[0:best_idx] + window_libs[best_idx + 1:]
-    return slibs, rem_days
+    return slibs, rem_days, used_books
 
 
-def lib_count(problem, slib, remaining_days):
+def lib_count(problem, slib, remaining_days, used_books):
     lib = problem.libs[slib.lib_id]
     lib_rem_days = remaining_days - lib.signup_days
-    if lib_rem_days < 0:
-        return 0
-    integ = integral(problem, lib)
+    if lib_rem_days <= 0:
+        return -1
+    integ = integral(problem, lib, used_books)
+    if len(integ) == 0:
+        return -1
     # max points for this lib
     if lib_rem_days < len(integ):
         return integ[lib_rem_days]
@@ -68,8 +74,9 @@ def lib_count(problem, slib, remaining_days):
         return integ[-1]
 
 
-def integral(problem, lib):
-    ordered = sorted(lib.book_ids, key=lambda it: -problem.scores[it])
+def integral(problem, lib, used_books):
+    book_ids = list(filter(lambda it: it not in used_books, lib.book_ids))
+    ordered = sorted(book_ids, key=lambda it: -problem.scores[it])
     integ = list(map(lambda it: problem.scores[it], ordered))
     for idx, book_id in enumerate(ordered[1:]):
         integ[idx + 1] += integ[idx]

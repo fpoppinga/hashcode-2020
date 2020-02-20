@@ -7,7 +7,7 @@ class Library:
         self.num_books = num_books
         self.signup_days = signup_days
         self.books_per_day = books_per_day
-        self.book_ids = book_ids
+        self.book_ids = list(set(book_ids))
 
     def __str__(self):
         return "Lib({}, {}, {}, {})".format(self.num_books, self.signup_days, self.books_per_day, self.book_ids)
