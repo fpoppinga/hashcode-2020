@@ -6,11 +6,18 @@ from sample.naive import zipdir
 
 
 def solve(problem):
+    libs_with_score = []
+    for id, lib in enumerate(problem.libs):
+        s_lib = SolutionLibs(id, lib.book_ids)
+        sol = Solution([s_lib])
+        s = score(p, sol)
+        book_score = s / ((lib.num_books / lib.books_per_day) + lib.signup_days)
+        libs_with_score.append((s_lib, book_score))
+
+    ordered = sorted(libs_with_score, key=lambda it: -it[1])
     libs = []
-    ordered = sorted(list(enumerate(problem.libs)), key=lambda it: it[1].signup_days)
-    for id, lib in ordered:
-        sol_lib = SolutionLibs(id, lib.book_ids)
-        libs.append(sol_lib)
+    for s_lib, s in ordered:
+        libs.append(s_lib)
     s = Solution(libs)
     return s
 
