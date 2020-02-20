@@ -8,7 +8,8 @@ from sample.naive import zipdir
 def chunks(lst, n, offset):
     if offset > len(lst):
         return lst
-    yield lst[0:offset]
+    if offset > 0:
+        yield lst[0:offset]
     for i in range(0, len(lst), n):
         yield lst[offset + i:offset + i + n]
 
@@ -58,7 +59,8 @@ def optimize(problem, remaining_days, window_libs, used_books):
             # count = score(problem, Solution(slibs+[slib]))
             count = lib_count(problem, slib, rem_days, used_books)
             if count > max_count:
-                ordered = sorted(filter(lambda it: it not in used_books, slib.book_ids),
+                # ordered = sorted(filter(lambda it: it not in used_books, slib.book_ids),
+                ordered = sorted(slib.book_ids,
                                  key=lambda it: -problem.scores[it])
                 best = SolutionLibs(slib.lib_id, ordered)
                 best_idx = idx
@@ -78,7 +80,7 @@ def lib_count(problem, slib, remaining_days, used_books):
         return 0
     integ = integral(problem, lib, used_books)
     if len(integ) == 0:
-        return -1
+        return 0
     # max points for this lib
     if lib_rem_days < len(integ):
         return integ[lib_rem_days]
@@ -93,11 +95,14 @@ def integral(problem, lib, used_books):
     chunked = list(chunks(ordered, lib.books_per_day, 0))
     integ = [0 for _ in range(len(chunked))]
     for day, chunk in enumerate(chunked):
-        x = sum(map(lambda it: problem.scores[it], chunk))
+        a = list(map(lambda it: problem.scores[it], chunk))
+        x = sum(a)
+        # print(chunk, a, x)
         if day == 0:
             integ[0] = x
             continue
         integ[day] = x + integ[day - 1]
+    # print(lib, chunked, integ)
 
     return integ
 
