@@ -11,7 +11,7 @@ def solve(problem):
         s_lib = SolutionLibs(id, lib.book_ids)
         sol = Solution([s_lib])
         s = score(p, sol)
-        book_score = s / ((lib.num_books / lib.books_per_day) + lib.signup_days)
+        book_score = s / (0.10 * (lib.num_books / lib.books_per_day) + 0.90 * lib.signup_days)
         libs_with_score.append((s_lib, book_score))
 
     ordered = sorted(libs_with_score, key=lambda it: -it[1])
