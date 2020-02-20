@@ -10,11 +10,26 @@ def solve(problem):
     for id, lib in enumerate(problem.libs):
         s_lib = SolutionLibs(id, lib.book_ids)
         sol = Solution([s_lib])
-        s = score(p, sol)
+        s = score(problem, sol)
         book_score = s / (0.10 * (lib.num_books / lib.books_per_day) + 0.90 * lib.signup_days)
         libs_with_score.append((s_lib, book_score))
 
     ordered = sorted(libs_with_score, key=lambda it: -it[1])
+
+    libs_with_score = []
+    used_books = set()
+    for slib, s in ordered:
+        lib = problem.libs[slib.lib_id]
+        remaining_books = set(slib.book_ids).difference(used_books)
+        slib_ = SolutionLibs(slib.lib_id, list(remaining_books))
+        used_books.update(remaining_books)
+        sol = Solution([slib_])
+        s = score(problem, sol)
+        book_score = s / (0.10 * (lib.num_books / lib.books_per_day) + 0.90 * lib.signup_days)
+        libs_with_score.append((slib_, book_score))
+
+    ordered = sorted(libs_with_score, key=lambda it: -it[1])
+
     libs = []
     for s_lib, s in ordered:
         libs.append(s_lib)
