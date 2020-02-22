@@ -68,10 +68,11 @@ def improve(problem, ordered):
                 sol_books.append(book)
                 del used_books[book]
             else:
+                # this book is used by a better lib!
                 assert used_books[book] > 1
                 used_books[book] -= 1
         if len(sol_books) == 0:
-            # lib can be skipped
+            # lib has no useful books → filter!
             rest.append((slib, lib_score))
             continue
         new_slib = SolutionLibs(slib.lib_id, sol_books)
