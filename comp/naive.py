@@ -34,9 +34,7 @@ def solve(problem):
 
     libs = []
     for s_lib, lib_score in ordered:
-        sol_books = sorted(s_lib.book_ids, key=lambda it: -problem.scores[it])
-        sol_lib = SolutionLibs(s_lib.lib_id, sol_books)
-        libs.append(sol_lib)
+        libs.append(s_lib)
 
     s = Solution(libs)
     return s
@@ -75,6 +73,7 @@ def improve(problem, ordered):
             # lib has no useful books → filter!
             rest.append((slib, lib_score))
             continue
+        sol_books = sorted(sol_books, key=lambda it: -problem.scores[it])
         new_slib = SolutionLibs(slib.lib_id, sol_books)
         s = score(problem, Solution([new_slib]))
         reverse_filtered.append((new_slib, s))
