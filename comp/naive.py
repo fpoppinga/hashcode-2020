@@ -14,27 +14,71 @@ def chunks(lst, n, offset):
         yield lst[offset + i:offset + i + n]
 
 
+def add(map, key, value):
+    if key in map:
+        map[key] += value
+    else:
+        map[key] = value
+
+
 def solve(problem):
     libs_with_score = []
     for id, lib in enumerate(problem.libs):
         s_lib = SolutionLibs(id, lib.book_ids)
-        sol = Solution([s_lib])
-        s = score(problem, sol)
+        s = score(problem, Solution([s_lib]))
         book_score = s / (0.10 * (lib.num_books / lib.books_per_day) + 0.90 * lib.signup_days)
         libs_with_score.append((s_lib, book_score))
 
-    ordered = list(map(lambda it: it[0], sorted(libs_with_score, key=lambda it: -it[1])))
+    ordered = sorted(libs_with_score, key=lambda it: -it[1])
+    ordered = improve(problem, ordered)
 
     libs = []
-    used_books = set()
-    for s_lib in ordered:
-        sol_books = sorted(list(set(s_lib.book_ids).difference(used_books)), key=lambda it: -problem.scores[it])
-        foo = SolutionLibs(s_lib.lib_id, sol_books)
-        used_books.update(foo.book_ids)
-        libs.append(foo)
-    
+    for s_lib, lib_score in ordered:
+        sol_books = sorted(s_lib.book_ids, key=lambda it: -problem.scores[it])
+        sol_lib = SolutionLibs(s_lib.lib_id, sol_books)
+        libs.append(sol_lib)
+
     s = Solution(libs)
     return s
+
+
+def improve(problem, ordered):
+    # filter by deadline
+    remaining_days = problem.num_day
+    used_books = {}
+    reverse_ordered = []
+    rest = []
+    for slib, lib_score in ordered:
+        lib = problem.libs[slib.lib_id]
+        remaining_days -= lib.signup_days
+        if remaining_days < 0:
+            rest.append((slib, lib_score))
+        else:
+            reverse_ordered.insert(0, (slib, lib_score))
+            for book_id in lib.book_ids:
+                add(used_books, book_id, 1)
+
+    # check which libs can be dropped
+    reverse_filtered = []
+    for slib, lib_score in reverse_ordered:
+        sol_books = []
+        for book in slib.book_ids:
+            if used_books[book] == 1:
+                # this book should be used!
+                sol_books.append(book)
+                del used_books[book]
+            else:
+                assert used_books[book] > 1
+                used_books[book] -= 1
+        if len(sol_books) == 0:
+            # lib can be skipped
+            rest.append((slib, lib_score))
+            continue
+        new_slib = SolutionLibs(slib.lib_id, sol_books)
+        s = score(problem, Solution([new_slib]))
+        reverse_filtered.append((new_slib, s))
+
+    return sorted(reverse_filtered, key=lambda it: -it[1]) + rest
 
 
 if __name__ == "__main__":
