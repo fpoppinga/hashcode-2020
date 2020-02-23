@@ -1,5 +1,6 @@
 import os
 import zipfile
+from datetime import datetime, timedelta
 
 from comp.io import Problem, score, SolutionLibs, Solution
 from sample.naive import zipdir
@@ -22,15 +23,31 @@ def add(map, key, value):
 
 
 def solve(problem):
-    libs_with_score = []
-    for id, lib in enumerate(problem.libs):
-        s_lib = SolutionLibs(id, lib.book_ids)
-        s = score(problem, Solution([s_lib]))
-        book_score = s / lib.signup_days
-        libs_with_score.append((s_lib, book_score))
-
-    ordered = sorted(libs_with_score, key=lambda it: -it[1])
-    ordered = improve(problem, ordered)
+    remaining_days = problem.num_day
+    ordered = []
+    used_books = set()
+    progress = Progress(problem.num_day)
+    remaining_libs = set(range(len(problem.libs)))
+    while remaining_days >= 0:
+        best_next = None
+        for id in remaining_libs:
+            plib = problem.libs[id]
+            added_books = plib.book_ids.difference(used_books)
+            useless_books = plib.book_ids.difference(added_books)
+            books_to_add = list(added_books) + list(useless_books)
+            added_score = sum(map(lambda it: problem.scores[it], added_books)) / plib.signup_days
+            if best_next is None or best_next[1] < added_score:
+                best_next = (SolutionLibs(id, books_to_add), added_score)
+        if best_next == None:
+            print("break!")
+            break
+        else:
+            best_lib = best_next[0]
+            remaining_libs.remove(best_lib.lib_id)
+            used_books.update(best_lib.book_ids)
+            ordered.append(best_next)
+            remaining_days -= problem.libs[best_lib.lib_id].signup_days
+        progress.update(problem.num_day - remaining_days)
 
     libs = []
     for s_lib, lib_score in ordered:
@@ -40,45 +57,21 @@ def solve(problem):
     return s
 
 
-def improve(problem, ordered):
-    # filter by deadline
-    remaining_days = problem.num_day
-    used_books = {}
-    reverse_ordered = []
-    rest = []
-    for slib, lib_score in ordered:
-        lib = problem.libs[slib.lib_id]
-        remaining_days -= lib.signup_days
-        if remaining_days < 0:
-            rest.append((slib, lib_score))
-        else:
-            reverse_ordered.insert(0, (slib, lib_score))
-            for book_id in lib.book_ids:
-                add(used_books, book_id, 1)
+class Progress:
+    def __init__(self, total, log_interval_ms=5000):
+        self.total = total
+        self.start = datetime.now()
+        self.log_interval = timedelta(milliseconds=log_interval_ms)
+        self.current = 0
+        self.last = datetime.now()
 
-    # check which libs can be dropped
-    reverse_filtered = []
-    for slib, lib_score in reverse_ordered:
-        sol_books = []
-        for book in slib.book_ids:
-            if used_books[book] == 1:
-                # this book should be used!
-                sol_books.append(book)
-                del used_books[book]
-            else:
-                # this book is used by a better lib!
-                assert used_books[book] > 1
-                used_books[book] -= 1
-        if len(sol_books) == 0:
-            # lib has no useful books → filter!
-            rest.append((slib, lib_score))
-            continue
-        sol_books = sorted(sol_books, key=lambda it: -problem.scores[it])
-        new_slib = SolutionLibs(slib.lib_id, sol_books)
-        s = score(problem, Solution([new_slib]))
-        reverse_filtered.append((new_slib, s))
-
-    return sorted(reverse_filtered, key=lambda it: -it[1]) + rest
+    def update(self, current):
+        now = datetime.now()
+        if (now - self.last) > self.log_interval:
+            remaining_time = (now - self.start) / current * (self.total - current)
+            print("- {} done, {}s remaining".format(current / self.total, remaining_time.total_seconds()))
+            self.last = now
+        self.current = current
 
 
 if __name__ == "__main__":

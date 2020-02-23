@@ -1,13 +1,13 @@
 import numpy as np
 import argparse
-
+from sortedcontainers import SortedSet
 
 class Library:
-    def __init__(self, num_books, signup_days, books_per_day, book_ids):
+    def __init__(self, num_books, signup_days, books_per_day, book_ids, book_scores):
         self.num_books = num_books
         self.signup_days = signup_days
         self.books_per_day = books_per_day
-        self.book_ids = list(set(book_ids))
+        self.book_ids = SortedSet(book_ids, key=lambda it: -book_scores[it])
 
     def __str__(self):
         return "Lib({}, {}, {}, {})".format(self.num_books, self.signup_days, self.books_per_day, self.book_ids)
@@ -64,7 +64,7 @@ class Problem:
                 [num_books, signup_days, books_per_day] = map(int, preamble)
                 preamble = f.readline().split()
                 book_ids = list(map(int, preamble))
-                self.libs.append(Library(num_books, signup_days, books_per_day, book_ids))
+                self.libs.append(Library(num_books, signup_days, books_per_day, book_ids, self.scores))
 
     def __str__(self):
         return "Problem({},{},{},{},{})".format(self.num_books, self.num_libs, self.num_day, self.scores, list(map(str,self.libs)))
