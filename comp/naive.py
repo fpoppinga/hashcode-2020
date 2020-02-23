@@ -41,6 +41,9 @@ def solve(problem):
             # find books this library offers and are not uses yet
             added_books = sorted(plib.book_ids.difference(used_books), key=book_sort)[
                           :(remaining_days - plib.signup_days) * plib.books_per_day]
+            if len(added_books) == 0:
+                # skip lib if it has no books to add
+                continue
             # calculate the 'best'-heuristic:
             # score this library adds relative to it's setup time
             added_score = sum(map(lambda it: problem.scores[it], added_books)) / plib.signup_days
