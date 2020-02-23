@@ -39,14 +39,14 @@ def solve(problem):
         for id in remaining_libs:
             plib = problem.libs[id]
             # find books this library offers and are not uses yet
-            added_books = plib.book_ids.difference(used_books)
+            added_books = sorted(plib.book_ids.difference(used_books), key=book_sort)[
+                          :(remaining_days - plib.signup_days) * plib.books_per_day]
             # calculate the 'best'-heuristic:
             # score this library adds relative to it's setup time
             added_score = sum(map(lambda it: problem.scores[it], added_books)) / plib.signup_days
             if best_score < added_score:
                 # if we pick this library, take books with higher score first
-                books_to_add = sorted(added_books, key=book_sort)
-                best_next = SolutionLibs(id, books_to_add)
+                best_next = SolutionLibs(id, added_books)
                 best_score = added_score
         # if we have picked all libraries, we can stop the search
         if best_next == None:
