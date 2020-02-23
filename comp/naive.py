@@ -23,37 +23,42 @@ def add(map, key, value):
 
 
 def solve(problem):
+    # init: all days are remaining, now libs selected, no books used, all libs remaining
     remaining_days = problem.num_day
     ordered = []
     used_books = set()
-    progress = Progress(problem.num_day)
     remaining_libs = set(range(len(problem.libs)))
+    # init progress logger
+    progress = Progress(problem.num_day)
     while remaining_days >= 0:
+        # as long as we have time left, find the next best lib
         best_next = None
+        best_score = -1
+        # from all remaining libraries
         for id in remaining_libs:
             plib = problem.libs[id]
+            # find books this library offers and are not uses yet
             added_books = plib.book_ids.difference(used_books)
+            # find books this library offers but already used
             useless_books = plib.book_ids.difference(added_books)
+            # if we pick this library, take new books first
             books_to_add = list(added_books) + list(useless_books)
+            # calculate the 'best'-heuristic:
+            # score this library adds relative to it's setup time
             added_score = sum(map(lambda it: problem.scores[it], added_books)) / plib.signup_days
-            if best_next is None or best_next[1] < added_score:
-                best_next = (SolutionLibs(id, books_to_add), added_score)
+            if best_score < added_score:
+                best_next = SolutionLibs(id, books_to_add)
+        # if we have picked all libraries, we can stop the search
         if best_next == None:
-            print("break!")
             break
         else:
-            best_lib = best_next[0]
-            remaining_libs.remove(best_lib.lib_id)
-            used_books.update(best_lib.book_ids)
+            remaining_libs.remove(best_next.lib_id)
+            used_books.update(best_next.book_ids)
             ordered.append(best_next)
-            remaining_days -= problem.libs[best_lib.lib_id].signup_days
+            remaining_days -= problem.libs[best_next.lib_id].signup_days
         progress.update(problem.num_day - remaining_days)
 
-    libs = []
-    for s_lib, lib_score in ordered:
-        libs.append(s_lib)
-
-    s = Solution(libs)
+    s = Solution(ordered)
     return s
 
 
