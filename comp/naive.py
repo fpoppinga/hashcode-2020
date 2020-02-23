@@ -23,6 +23,7 @@ def add(map, key, value):
 
 
 def solve(problem):
+    book_sort = lambda it: -problem.scores[it]
     # init: all days are remaining, now libs selected, no books used, all libs remaining
     remaining_days = problem.num_day
     ordered = []
@@ -39,15 +40,14 @@ def solve(problem):
             plib = problem.libs[id]
             # find books this library offers and are not uses yet
             added_books = plib.book_ids.difference(used_books)
-            # find books this library offers but already used
-            useless_books = plib.book_ids.difference(added_books)
-            # if we pick this library, take new books first
-            books_to_add = list(added_books) + list(useless_books)
             # calculate the 'best'-heuristic:
             # score this library adds relative to it's setup time
             added_score = sum(map(lambda it: problem.scores[it], added_books)) / plib.signup_days
             if best_score < added_score:
+                # if we pick this library, take books with higher score first
+                books_to_add = sorted(added_books, key=book_sort)
                 best_next = SolutionLibs(id, books_to_add)
+                best_score = added_score
         # if we have picked all libraries, we can stop the search
         if best_next == None:
             break

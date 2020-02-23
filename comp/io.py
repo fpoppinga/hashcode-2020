@@ -1,13 +1,13 @@
 import numpy as np
 import argparse
-from sortedcontainers import SortedSet
+
 
 class Library:
     def __init__(self, num_books, signup_days, books_per_day, book_ids, book_scores):
         self.num_books = num_books
         self.signup_days = signup_days
         self.books_per_day = books_per_day
-        self.book_ids = SortedSet(book_ids, key=lambda it: -book_scores[it])
+        self.book_ids = set(book_ids)
 
     def __str__(self):
         return "Lib({}, {}, {}, {})".format(self.num_books, self.signup_days, self.books_per_day, self.book_ids)
@@ -19,7 +19,8 @@ class SolutionLibs:
         self.book_ids = book_ids
 
     def __str__(self):
-        return "{} {}\n{}".format(self.lib_id, len(self.book_ids), " ".join(map(str,self.book_ids)))
+        return "{} {}\n{}".format(self.lib_id, len(self.book_ids), " ".join(map(str, self.book_ids)))
+
 
 class Solution:
     def __init__(self, libs):
@@ -67,7 +68,8 @@ class Problem:
                 self.libs.append(Library(num_books, signup_days, books_per_day, book_ids, self.scores))
 
     def __str__(self):
-        return "Problem({},{},{},{},{})".format(self.num_books, self.num_libs, self.num_day, self.scores, list(map(str,self.libs)))
+        return "Problem({},{},{},{},{})".format(self.num_books, self.num_libs, self.num_day, self.scores,
+                                                list(map(str, self.libs)))
 
 
 def score(problem: Problem, solution: Solution):
@@ -78,11 +80,12 @@ def score(problem: Problem, solution: Solution):
         num_days -= prob_lib.signup_days
         if num_days < 0:
             break
-        book_ids.update(lib.book_ids[:(num_days*prob_lib.books_per_day)])
+        book_ids.update(lib.book_ids[:(num_days * prob_lib.books_per_day)])
     score = 0
     for book in book_ids:
         score += problem.scores[book]
     return score
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
